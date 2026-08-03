@@ -42,4 +42,4 @@ async def on_command_error(ctx, error):
 		await bot.process_error(error)
 
         
-bot.run("MTUxOTMwNzM2OTg0NTEwMDY5Nw.GJFhQ2.-RuaF7aNmB8mSEKpmLljFExTC_MTXFnau6M5iw")
+bot.run("")
