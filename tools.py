@@ -33,8 +33,9 @@ class DiscordTools():
             return "invalid amount of message"
         channel = self.guild.get_channel(channelId)
         if not channel:
-            channel = await self.guild.fetch_channel(channelId)
-            if not channel:
+            try:
+                channel = await self.guild.fetch_channel(channelId)
+            except Exception as e:
                 await self._send_functioncall_history("메세지 가져오기", False, "채널 검색 실패")
                 return "channel not found"
         if not isinstance(channel, discord.abc.Messageable):
@@ -122,8 +123,10 @@ class DiscordTools():
         '''
         channel = self.guild.get_channel(channelId)
         if not channel:
-            channel = await self.guild.fetch_channel(channelId)
-            if not channel:
+            try:
+                channel = await self.guild.fetch_channel(channelId)
+            except Exception as e:
+                await self._send_functioncall_history("메세지 전송", False, "채널 검색 실패")
                 return "channel not found"
         if not isinstance(channel, discord.abc.Messageable):
             await self._send_functioncall_history("메세지 전송", False, "메시지 전송 불가 채널")
@@ -150,8 +153,9 @@ class DiscordTools():
         '''
         channel = self.guild.get_channel(channelId)
         if not channel:
-            channel = await self.guild.fetch_channel(channelId)
-            if not channel:
+            try:
+                channel = await self.guild.fetch_channel(channelId)
+            except Exception as e:
                 await self._send_functioncall_history("메세지 삭제", False, "채널 검색 실패")
                 return "channel not found"
         if not isinstance(channel, discord.abc.Messageable):

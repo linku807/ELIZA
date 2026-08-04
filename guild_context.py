@@ -6,7 +6,7 @@ class GuildContext:
         self.bot = bot
         self.guild = guild
         self.agentchannel = agentchannel
-        self.discord_tools = DiscordTools(bot, self)
+        self.tools = DiscordTools(bot, self)
         self.permission = permission
         self.need_prefix = need_prefix
         self.guild_term = guild_term

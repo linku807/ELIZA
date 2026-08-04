@@ -6,7 +6,6 @@ class Eliza(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.guild_manager = GuildManager(self)  # Initialize the GuildManager
-        self.genai_client = genai.Client(api_key="YOUR_API_KEY")
 
     async def on_ready(self):
         print(f'Logged in as {self.user.name} (ID: {self.user.id})')
