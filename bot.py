@@ -30,8 +30,8 @@ async def on_message(message):
 	await message.channel.send(message.content)
 	await bot.process_commands(message)
 
-@bot.tree.command(name="인사", description="봇이 유저에게 인사를 건넵니다.")
-async def hello(interaction: discord.Interaction):
+@bot.tree.command(name="초기설정", description="에이전트의 초기설정을 진행합니다")
+async def initial_setup(interaction: discord.Interaction):
 	await interaction.response.send_message(f"안녕하세요, {interaction.user.mention}님! 호출해주셔서 감사합니다.")
     
 @bot.event
