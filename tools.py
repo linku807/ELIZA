@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from datetime import timedelta
 
 class DiscordTools():
     def __init__(self, bot, guildctx):
@@ -13,7 +14,7 @@ class DiscordTools():
         embed.add_field(name="상태", value=status, inline=False)
         if detail:
             embed.add_field(name="상세", value=detail, inline=False)
-        await self.guildctx.agentchannel.send_message(embed = embed)
+        await self.guildctx.agentchannel.send(embed = embed)
 
     async def get_message(self, channelId:int, amount:int):
         '''Get messages from a channel by channelId and amount of messages to get.
@@ -197,8 +198,7 @@ class DiscordTools():
         if not user:
             await self._send_functioncall_history("유저 타임아웃", False, "유저 검색 실패")
             return "user not found"
-        duration = hours*3600 + minutes*60 + seconds
-        await user.timeout(duration)
+        await user.timeout(timedelta(hours=hours, minutes=minutes, seconds=seconds))
         await self._send_functioncall_history("유저 타임아웃", True, "성공", f"타임아웃된 유저: {user.display_name}, 기간: {hours}시간 {minutes}분 {seconds}초")
         return {
             "status": "success",
