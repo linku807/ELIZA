@@ -48,8 +48,7 @@ class DiscordTools():
                 "author":{
                    "id":message.author.id,
                    "is_bot":message.author.bot,
-                   "name":message.author.display_name,
-                   "is_admin":message.author.guild_permissions.administrator
+                   "name":message.author.display_name
                    },
                 "message_content":message.content, 
                 "created_at": message.created_at.isoformat() if message.created_at else None,

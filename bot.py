@@ -19,4 +19,4 @@ class Eliza(commands.Bot):
         if isinstance(error, commands.CommandNotFound):
             return
         else:
-            await self.process_error(error)
+            raise error
