@@ -78,7 +78,8 @@ class GuildContext:
     def init_chat(self):
         instruction = self.instruction_builder()
         self.chat = self.gemini.aio.chats.create(
-            model="gemini-3.5-flash-lite",
+            model="gemini-3.6-flash",
+            temperature = 0.3,
             config=types.GenerateContentConfig(
                 thinking_config=types.ThinkingConfig(
                     thinking_level="high"

@@ -40,6 +40,23 @@ class DiscordTools():
             embed.add_field(name="상세", value=detail, inline=False)
         await self.guildctx.agentchannel.send(embed = embed)
 
+
+    async def _get_channel(self, channelId:int, function_name:str):
+        print(f"trying to get channel : {channelId}, {type(channelId)}")
+        channel = self.bot.get_channel(int(channelId))
+        if not channel:
+            try:
+                channel = await self.bot.fetch_channel(int(channelId))
+            except Exception as e:
+                await self._send_functioncall_history(function_name, False, "채널 검색 실패")
+                return f"channel not found or unexpected error {e}"
+
+        if not isinstance(channel, discord.abc.Messageable):
+            await self._send_functioncall_history(function_name, False, "메시지 전송 불가 채널")
+            return "the channel is not Messageable"
+        
+        return channel
+
     async def get_message(self, channelId:int, amount:int):
         '''Get messages from a channel by channelId and amount of messages to get.
         Returns a list of messages with their details or an error message if something goes wrong.
@@ -55,16 +72,12 @@ class DiscordTools():
         if amount>100 or amount<=0:
             await self._send_functioncall_history("메세지 가져오기", False, "유효하지 않은 갯수")
             return "invalid amount of message"
-        channel = self.bot.get_channel(int(channelId))
-        if not channel:
-            try:
-                channel = await self.bot.fetch_channel(int(channelId))
-            except Exception as e:
-                await self._send_functioncall_history("메세지 가져오기", False, "채널 검색 실패")
-                return f"channel not found or unexpected error {e}"
-        if not isinstance(channel, discord.abc.Messageable):
-            await self._send_functioncall_history("메세지 가져오기", False, "메시지 전송 불가 채널")
-            return "the channel is not Messageable"
+
+        channel = await self._get_channel(channelId, "메세지 가져오기")
+
+        if isinstance(channel, str):
+            return channel
+        
         processed_messages = []
         async for message in channel.history(limit = amount):
             processed_messages.append(
@@ -144,16 +157,11 @@ class DiscordTools():
             dict: A dictionary containing message details if successful.
             str: An error message if the channel is not found or not messageable.
         '''
-        channel = self.bot.get_channel(int(channelId))
-        if not channel:
-            try:
-                channel = await self.bot.fetch_channel(int(channelId))
-            except Exception as e:
-                await self._send_functioncall_history("메세지 전송", False, "채널 검색 실패")
-                return "channel not found"
-        if not isinstance(channel, discord.abc.Messageable):
-            await self._send_functioncall_history("메세지 전송", False, "메시지 전송 불가 채널")
-            return "the channel is not Messageable"
+        channel = await self._get_channel(channelId, "메세지 가져오기")
+
+        if isinstance(channel, str):
+            return channel
+        
         sent_message = await channel.send(message)
         await self._send_functioncall_history("메세지 전송", True, "성공", f"전송된 메시지: {sent_message.content}")
         return {
@@ -174,16 +182,11 @@ class DiscordTools():
             dict: A dictionary containing message details if successful.
             str: An error message if the channel is not found, not messageable, or if the message is not found.
         '''
-        channel = self.bot.get_channel(int(channelId))
-        if not channel:
-            try:
-                channel = await self.bot.fetch_channel(int(channelId))
-            except Exception as e:
-                await self._send_functioncall_history("메세지 삭제", False, "채널 검색 실패")
-                return "channel not found"
-        if not isinstance(channel, discord.abc.Messageable):
-            await self._send_functioncall_history("메세지 삭제", False, "메시지 삭제 불가 채널")
-            return "the channel is not Messageable"
+        channel = await self._get_channel(channelId, "메세지 가져오기")
+
+        if isinstance(channel, str):
+            return channel
+        
         try:
             message = await channel.fetch_message(int(messageId))
         except discord.NotFound:
