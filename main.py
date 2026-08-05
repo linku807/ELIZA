@@ -2,8 +2,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from bot import Eliza
-import os
+import os, time
 from dotenv import load_dotenv
+from google.genai.errors import APIError
 
 load_dotenv()
 
@@ -25,15 +26,36 @@ async def initial_setup(interaction: discord.Interaction, 채널: discord.TextCh
 	bot.guild_manager.add_guild(interaction.guild.id, agentchannel=채널, need_prefix=프리픽스, api_key=apikey)
 	await interaction.response.send_message("에이전트 초기설정이 완료되었습니다.", ephemeral=True)
 
-@bot.command(name=f"<@1534080925875441664>")
+@bot.command(name="<@1534080925875441664>")
 async def agent_metioned(ctx):
 	guild_context = bot.guild_manager.get_guild(ctx.guild.id)
 	if guild_context:
 		if guild_context.agentchannel.id != ctx.channel.id:
 			return
-		message = ctx.message.content.replace(f"<@1534080925875441664> ", "").strip()
-		# 현재는 대충 함수가 작동하는지만 체크함.
-		
+		if not guild_context.chat:
+			guild_context.init_chat()
+		message = ctx.message.content.replace("<@1534080925875441664> ", "").strip()
+
+		origin_msg = await ctx.send("-# **ELIZA가 생각 중이에요**")
+		response = []
+		start_time = time.perf_counter()
+		try:
+			async for i in await guild_context.chat.send_message_stream(guild_context.prompt_builder(message, channel_id=ctx.channel.id)):
+				if not i.text:
+					continue
+				response.append(i.text)
+				current_time = time.perf_counter()
+				if current_time - start_time>=1.0:
+					start_time = current_time
+					await origin_msg.edit(content = "".join(response))
+			await origin_msg.edit(content = "".join(response))
+		except Exception as e:
+			if isinstance(e, APIError):
+				status = int(e.code)
+				await origin_msg.edit(f"API 오류 발생\n{status}")
+			else:
+				raise e
+				
 	else:
 		await ctx.send("이 서버는 아직 초기설정이 완료되지 않았습니다. 관리자에게 문의하세요.")
 

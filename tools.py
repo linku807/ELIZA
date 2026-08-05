@@ -8,6 +8,13 @@ class DiscordTools():
         self.guildctx = guildctx
         self.guild = guildctx.guild
 
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        result.__dict__.update(self.__dict__)
+        return result
+
     async def _send_functioncall_history(self, function_name:str, is_sucess:bool, status: str, detail: str = None):
         color = discord.Color.green() if is_sucess else discord.Color.red()
         embed = discord.Embed(title=function_name, color=color)
@@ -31,13 +38,13 @@ class DiscordTools():
         if amount>100 or amount<=0:
             await self._send_functioncall_history("메세지 가져오기", False, "유효하지 않은 갯수")
             return "invalid amount of message"
-        channel = self.guild.get_channel(channelId)
+        channel = self.bot.get_channel(int(channelId))
         if not channel:
             try:
-                channel = await self.guild.fetch_channel(channelId)
+                channel = await self.bot.fetch_channel(int(channelId))
             except Exception as e:
                 await self._send_functioncall_history("메세지 가져오기", False, "채널 검색 실패")
-                return "channel not found"
+                return f"channel not found or unexpected error {e}"
         if not isinstance(channel, discord.abc.Messageable):
             await self._send_functioncall_history("메세지 가져오기", False, "메시지 전송 불가 채널")
             return "the channel is not Messageable"
@@ -92,9 +99,9 @@ class DiscordTools():
             str: An error message if the user is not found.
         '''
         try:
-            user = self.guild.get_member(userId)
+            user = self.guild.get_member(int(userId))
             if not user:
-                user = await self.guild.fetch_member(userId)
+                user = await self.guild.fetch_member(int(userId))
         except Exception as e:
             await self._send_functioncall_history("유저 가져오기", False, "유저 검색 실패")
             return "user not found"
@@ -120,10 +127,10 @@ class DiscordTools():
             dict: A dictionary containing message details if successful.
             str: An error message if the channel is not found or not messageable.
         '''
-        channel = self.guild.get_channel(channelId)
+        channel = self.bot.get_channel(int(channelId))
         if not channel:
             try:
-                channel = await self.guild.fetch_channel(channelId)
+                channel = await self.bot.fetch_channel(int(channelId))
             except Exception as e:
                 await self._send_functioncall_history("메세지 전송", False, "채널 검색 실패")
                 return "channel not found"
@@ -150,10 +157,10 @@ class DiscordTools():
             dict: A dictionary containing message details if successful.
             str: An error message if the channel is not found, not messageable, or if the message is not found.
         '''
-        channel = self.guild.get_channel(channelId)
+        channel = self.bot.get_channel(int(channelId))
         if not channel:
             try:
-                channel = await self.guild.fetch_channel(channelId)
+                channel = await self.bot.fetch_channel(int(channelId))
             except Exception as e:
                 await self._send_functioncall_history("메세지 삭제", False, "채널 검색 실패")
                 return "channel not found"
@@ -161,7 +168,7 @@ class DiscordTools():
             await self._send_functioncall_history("메세지 삭제", False, "메시지 삭제 불가 채널")
             return "the channel is not Messageable"
         try:
-            message = await channel.fetch_message(messageId)
+            message = await channel.fetch_message(int(messageId))
         except discord.NotFound:
             await self._send_functioncall_history("메세지 삭제", False, "메시지 검색 실패")
             return "message not found"
@@ -192,9 +199,9 @@ class DiscordTools():
             str: An error message if the user is not found.
         '''
         try:
-            user = self.guild.get_member(userId)
+            user = self.guild.get_member(int(userId))
             if not user:
-                user = await self.guild.fetch_member(userId)
+                user = await self.guild.fetch_member(int(userId))
         except Exception as e:
             await self._send_functioncall_history("유저 타임아웃", False, "유저 검색 실패")
             return "user not found"
@@ -213,4 +220,3 @@ class DiscordTools():
                 "minutes": minutes,
                 "seconds": seconds
             }}
-    

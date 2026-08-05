@@ -1,5 +1,6 @@
 from tools import DiscordTools
 from google import genai
+from google.genai import types
 
 class GuildContext:
     def __init__(self, bot, guild, agentchannel=None, permission=None, need_prefix=None, guild_term=None, user_instruction=None, api_key=None):
@@ -59,8 +60,15 @@ class GuildContext:
 
     def init_chat(self):
         instruction = self.instruction_builder()
-        self.chat = self.gemini.chat.create(
-            model="gemini-1.5-turbo",
-            instructions=instruction,
+        self.chat = self.gemini.aio.chats.create(
+            model="gemini-3.5-flash-lite",
+            config=types.GenerateContentConfig(
+                thinking_config=types.ThinkingConfig(
+                    thinking_level="high"
+                ),
+            system_instruction=instruction,
+            tools=[{"url_context":{}}, self.tools.get_message, self.tools.get_channels, self.tools.delete_message, self.tools.send_message, self.tools.get_user, self.tools.timeout],
+            tool_config = types.ToolConfig(include_server_side_tool_invocations=True)
+            ),
             history=self.agent_history
         )
