@@ -16,7 +16,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
 from discord.ext import commands
-from guildmanager import GuildManager
+from src.guildmanager import GuildManager
 from google import genai
 
 class Eliza(commands.Bot):

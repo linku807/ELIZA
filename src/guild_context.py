@@ -15,10 +15,10 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
-from tools import DiscordTools
+from src.tools import DiscordTools
 from google import genai
 from google.genai import types
-import hangul512, re
+import src.hangul512 as hangul512, re
 from contextvars import ContextVar
 
 class GuildContext:

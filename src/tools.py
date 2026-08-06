@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>
 import discord
 from discord.ext import commands
 from datetime import timedelta
-import hangul512
+import src.hangul512 as hangul512
 from contextvars import ContextVar
 
 class DiscordTools():

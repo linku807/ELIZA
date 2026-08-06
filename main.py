@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>
 import discord
 from discord import app_commands
 from discord.ext import commands
-from bot import Eliza
+from src.bot import Eliza
 import os, time
 from dotenv import load_dotenv
 from google.genai.errors import APIError
