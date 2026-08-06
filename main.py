@@ -47,8 +47,6 @@ async def initial_setup(interaction: discord.Interaction, 채널: discord.TextCh
 async def agent_metioned(ctx):
 	guild_context = bot.guild_manager.get_guild(ctx.guild.id)
 	if guild_context:
-		if guild_context.agentchannel.id != ctx.channel.id:
-			return
 		if not guild_context.chat:
 			guild_context.init_chat()
 		message = ctx.message.content.replace("<@1534080925875441664> ", "").strip()
@@ -64,12 +62,14 @@ async def agent_metioned(ctx):
 				current_time = time.perf_counter()
 				if current_time - start_time>=1.0:
 					start_time = current_time
+					if "".join(response) == "":
+						continue
 					await origin_msg.edit(content = "".join(response))
 			await origin_msg.edit(content = "".join(response))
 		except Exception as e:
 			if isinstance(e, APIError):
 				status = int(e.code)
-				await origin_msg.edit(f"API 오류 발생\n{status}")
+				await origin_msg.edit(content = f"API 오류 발생\n{status}")
 			else:
 				raise e
 				

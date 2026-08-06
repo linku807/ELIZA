@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>
 import discord
 from discord.ext import commands
 from datetime import timedelta
+import hangul512
 
 class DiscordTools():
     def __init__(self, bot, guildctx):
@@ -32,7 +33,7 @@ class DiscordTools():
         result.__dict__.update(self.__dict__)
         return result
 
-    async def _send_functioncall_history(self, function_name:str, is_sucess:bool, status: str, detail: str = None):
+    async def _send_functioncall_history(self, function_name:str, is_sucess:bool, status: str, detail: str | None = None):
         color = discord.Color.green() if is_sucess else discord.Color.red()
         embed = discord.Embed(title=function_name, color=color)
         embed.add_field(name="상태", value=status, inline=False)
@@ -41,12 +42,13 @@ class DiscordTools():
         await self.guildctx.agentchannel.send(embed = embed)
 
 
-    async def _get_channel(self, channelId:int, function_name:str):
-        print(f"trying to get channel : {channelId}, {type(channelId)}")
-        channel = self.bot.get_channel(int(channelId))
+    async def _get_channel(self, channelId:str, function_name:str):
+        channelId_sf = hangul512.decode(channelId)
+        print(f"trying to get channel : {channelId_sf}, {type(channelId_sf)}")
+        channel = self.bot.get_channel(int(channelId_sf))
         if not channel:
             try:
-                channel = await self.bot.fetch_channel(int(channelId))
+                channel = await self.bot.fetch_channel(int(channelId_sf))
             except Exception as e:
                 await self._send_functioncall_history(function_name, False, "채널 검색 실패")
                 return f"channel not found or unexpected error {e}"
@@ -57,12 +59,12 @@ class DiscordTools():
         
         return channel
 
-    async def get_message(self, channelId:int, amount:int):
+    async def get_message(self, channelId:str, amount:int):
         '''Get messages from a channel by channelId and amount of messages to get.
         Returns a list of messages with their details or an error message if something goes wrong.
 
         args:
-            channelId (int): The ID of the channel to get messages from.
+            channelId (str): The ID of the channel to get messages from. 
             amount (int): The number of messages to get from the channel. Must be between 1 and 100.
 
         Returns:
@@ -110,28 +112,28 @@ class DiscordTools():
         processed_channels = []
         for channel in channels:
             processed_channels.append({
-                "channelID": channel.id,
+                "channelID": hangul512.encode(channel.id),
                 "channel_name": channel.name,
                 "channel_type": str(channel.type)
             })
         await self._send_functioncall_history("채널 가져오기", True, "성공")
         return processed_channels
 
-    async def get_user(self, userId:int):
+    async def get_user(self, userId:str):
         '''Get a user from a guild by userId
         Returns a dictionary with user details or an error message if the user is not found.
 
         args:
-            userId (int): The ID of the user to get.
+            userId (str): The ID of the user to get.
 
         Returns:
             dict: A dictionary containing user details if found.
             str: An error message if the user is not found.
         '''
         try:
-            user = self.guild.get_member(int(userId))
+            user = self.guild.get_member(int(hangul512.decode(userId)))
             if not user:
-                user = await self.guild.fetch_member(int(userId))
+                user = await self.guild.fetch_member(int(hangul512.decode(userId)))
         except Exception as e:
             await self._send_functioncall_history("유저 가져오기", False, "유저 검색 실패")
             return "user not found"
@@ -145,12 +147,12 @@ class DiscordTools():
             "is_admin": user.guild_permissions.administrator,
         }
     
-    async def send_message(self, channelId:int, message:str):
+    async def send_message(self, channelId:str, message:str):
         '''Send a message to a channel by channelId
         Returns a dictionary with message details or an error message if the channel is not found or not messageable.
 
         args:
-            channelId (int): The ID of the channel to send the message to.
+            channelId (str): The ID of the channel to send the message to.
             message (str): The content of the message to send. 
         
         Returns:
@@ -166,17 +168,18 @@ class DiscordTools():
         await self._send_functioncall_history("메세지 전송", True, "성공", f"전송된 메시지: {sent_message.content}")
         return {
             "status": "success",
-            "messageID": sent_message.id,
+            "messageID": hangul512.encode(sent_message.id),
+            "send_channelID": channelId,
             "jump_url": sent_message.jump_url,
             "message_content": sent_message.content
         }
-    async def delete_message(self, channelId:int, messageId:int):
+    async def delete_message(self, channelId:str, messageId:str):
         '''Delete a message from a channel by channelId and messageId
         Returns a dictionary with message details or an error message if the channel is not found, not messageable, or if the message is not found.
 
         args:
-            channelId (int): The ID of the channel to delete the message from.
-            messageId (int): The ID of the message to delete.
+            channelId (str): The ID of the channel to delete the message from.
+            messageId (str): The ID of the message to delete.
         
         Returns:
             dict: A dictionary containing message details if successful.
@@ -188,7 +191,7 @@ class DiscordTools():
             return channel
         
         try:
-            message = await channel.fetch_message(int(messageId))
+            message = await channel.fetch_message(int(hangul512.decode(messageId)))
         except discord.NotFound:
             await self._send_functioncall_history("메세지 삭제", False, "메시지 검색 실패")
             return "message not found"
@@ -196,20 +199,20 @@ class DiscordTools():
         await self._send_functioncall_history("메세지 삭제", True, "성공", f"삭제된 메시지: {message.content}")
         return {
             "status": "success",
-            "messageID": message.id,
+            "messageID": hangul512.encode(message.id),
             "message_content": message.content,
             "author": {
-                "id": message.author.id,
+                "id": hangul512.encode(message.author.id),
                 "name": message.author.display_name,
                 "is_bot": message.author.bot
             },
         }
-    async def timeout(self, userId:int, hours:int=0, minutes:int=0, seconds:int = 0):
+    async def timeout(self, userId:str, hours:int=0, minutes:int=0, seconds:int = 0):
         '''Timeout a user from a guild by userId and duration
         Returns a dictionary with user details or an error message if the user is not found.
 
         args:
-            userId (int): The ID of the user to timeout.
+            userId (str): The ID of the user to timeout.
             hours (int): The number of hours to timeout the user for. Default is 0.
             minutes (int): The number of minutes to timeout the user for. Default is 0
             seconds (int): The number of seconds to timeout the user for. Default is 0
@@ -219,9 +222,9 @@ class DiscordTools():
             str: An error message if the user is not found.
         '''
         try:
-            user = self.guild.get_member(int(userId))
+            user = self.guild.get_member(int(hangul512.decode(userId)))
             if not user:
-                user = await self.guild.fetch_member(int(userId))
+                user = await self.guild.fetch_member(int(hangul512.decode(userId)))
         except Exception as e:
             await self._send_functioncall_history("유저 타임아웃", False, "유저 검색 실패")
             return "user not found"
@@ -232,7 +235,7 @@ class DiscordTools():
         await self._send_functioncall_history("유저 타임아웃", True, "성공", f"타임아웃된 유저: {user.display_name}, 기간: {hours}시간 {minutes}분 {seconds}초")
         return {
             "status": "success",
-            "userID": user.id,
+            "userID": hangul512.encode(user.id),
             "username": user.name,
             "name": user.display_name,
             "timeout_duration": {
@@ -240,3 +243,19 @@ class DiscordTools():
                 "minutes": minutes,
                 "seconds": seconds
             }}
+    """async def hangul512_encoding(self, num:int):
+        '''
+        encode number(int) into hangul512
+        
+        use example - at discord user metion(<@123456789>) or channel metion(<#987654321>), encode those id(123456789, 987654321) and call other fuctionse 
+
+        args:
+            num(int): Integer to be encoded in Hangul 512
+        
+        Returns:
+            str : An 8-character string encoded in Hangul 512.
+        '''
+
+        await self._send_functioncall_history("한글512로 인코딩", True, f"{num} 인코딩")
+
+        return hangul512.encode(num)"""
