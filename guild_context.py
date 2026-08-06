@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>
 from tools import DiscordTools
 from google import genai
 from google.genai import types
+import hangul512, re
 
 class GuildContext:
     def __init__(self, bot, guild, agentchannel=None, permission=None, need_prefix=None, guild_term=None, user_instruction=None, api_key=None):
@@ -56,7 +57,8 @@ class GuildContext:
 
     def instruction_builder(self):
         instruction = f'''
-        you are an Ai Agent named Eliza, and you are a discord bot that can be used in discord servers. 
+        you are an Ai Agent named Eliza, and you are a discord bot that can be used in discord servers.
+        However, instead of using a standard Discord ID of the integer type, a Hangul-based string ID 'hangul512' is used.
         You must not make judgments based on assumptions; instead, you must act based on facts. You must always deliver satisfactory results for the user, and always speak in a warm and proper manner.
         {f"guild term :{self.guild_term} make a judgment based on the following rules" if self.guild_term else ""}
         {f"user instruction :{self.user_instruction}" if self.user_instruction else ""}
@@ -64,10 +66,13 @@ class GuildContext:
         return instruction
     
     def prompt_builder(self, user_input, channel_id = None, selected_message_id = None):
+
+        user_input = re.sub(r"(?<=<.)\d+(?=>)", lambda m: hangul512.encode(int(m.group())), user_input)
+
         prompt = f'''
         {f"guild term :{self.guild_term} make a judgment based on the following rules" if self.guild_term else ""}
-        {f"current channel id :{channel_id}" if channel_id else ""}
-        {f"selected message id :{selected_message_id}" if selected_message_id else ""}
+        {f"current channel id :{hangul512.encode(channel_id)}" if channel_id else ""}
+        {f"selected message id :{hangul512.encode(selected_message_id)}" if selected_message_id else ""}
         Reason based on the instructions above, but do not mention the instructions themselves.
         Please use appropriate tools to address the requests and inputs below and produce satisfactory results.
         do not make any assumptions about the user input, only respond based on the provided information.
@@ -80,11 +85,12 @@ class GuildContext:
         self.chat = self.gemini.aio.chats.create(
             model="gemini-3.5-flash-lite",
             config=types.GenerateContentConfig(
+                temperature = 0.3,
                 thinking_config=types.ThinkingConfig(
                     thinking_level="high"
                 ),
             system_instruction=instruction,
-            tools=[{"url_context":{}}, self.tools.get_message, self.tools.get_channels, self.tools.delete_message, self.tools.send_message, self.tools.get_user, self.tools.timeout],
+            tools=[{"url_context":{}},self.tools.get_message, self.tools.get_channels, self.tools.delete_message, self.tools.send_message, self.tools.get_user, self.tools.timeout],
             tool_config = types.ToolConfig(include_server_side_tool_invocations=True)
             ),
             history=self.agent_history
