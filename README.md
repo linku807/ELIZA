@@ -51,5 +51,21 @@ Current MVP supports:
 - [ ] Long-term memory
 - [ ] Better moderation policies
 
+## Quick start
+
+make .env file and type your discord bot token and gemini api key
+```
+BOTKEY=your discord bot token
+APIKEY=your gemini api key
+```
+
+```bash
+pip install requirement.txt
+```
+
+```bash
+python main.py
+```
+
 ## License
 gpl 3.0 license
