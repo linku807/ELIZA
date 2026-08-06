@@ -19,6 +19,7 @@ import discord
 from discord.ext import commands
 from datetime import timedelta
 import hangul512
+from contextvars import ContextVar
 
 class DiscordTools():
     def __init__(self, bot, guildctx):
@@ -207,6 +208,7 @@ class DiscordTools():
                 "is_bot": message.author.bot
             },
         }
+    
     async def timeout(self, userId:str, hours:int=0, minutes:int=0, seconds:int = 0):
         '''Timeout a user from a guild by userId and duration
         Returns a dictionary with user details or an error message if the user is not found.
@@ -221,6 +223,14 @@ class DiscordTools():
             dict: A dictionary containing user details if successful.
             str: An error message if the user is not found.
         '''
+
+        ctx = self.guildctx.request_context.get()
+        user = ctx["user"]
+
+        if not user.guild_permissions.administrator:
+            await self._send_functioncall_history("유저 타임아웃", False, "사용자 권한 부족")
+            return "the requester doesn't have admin permission"
+
         try:
             user = self.guild.get_member(int(hangul512.decode(userId)))
             if not user:
@@ -243,6 +253,8 @@ class DiscordTools():
                 "minutes": minutes,
                 "seconds": seconds
             }}
+
+    
     """async def hangul512_encoding(self, num:int):
         '''
         encode number(int) into hangul512

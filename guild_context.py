@@ -19,6 +19,7 @@ from tools import DiscordTools
 from google import genai
 from google.genai import types
 import hangul512, re
+from contextvars import ContextVar
 
 class GuildContext:
     def __init__(self, bot, guild, agentchannel=None, permission=None, need_prefix=None, guild_term=None, user_instruction=None, api_key=None):
@@ -34,6 +35,7 @@ class GuildContext:
         self.api_key = api_key
         self.gemini = genai.Client(api_key=self.api_key)
         self.chat = None
+        self.request_context: ContextVar[dict] = ContextVar("request_context")
 
     def update_context(self, agentchannel=None, permission=None, need_prefix=None, guild_term=None, user_instruction=None, api_key=None):
         if agentchannel is not None:

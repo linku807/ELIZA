@@ -49,6 +49,7 @@ async def agent_metioned(ctx):
 	if guild_context:
 		if not guild_context.chat:
 			guild_context.init_chat()
+		guild_context.request_context.set({"user": ctx.author})
 		message = ctx.message.content.replace("<@1534080925875441664> ", "").strip()
 
 		origin_msg = await ctx.send("-# **ELIZA가 생각 중이에요**")
