@@ -29,6 +29,8 @@ class Eliza(commands.Bot):
         try:
             synced = await self.tree.sync()
             print(f"Successfully loaded {len(synced)} slash commands")
+            self.guild_manager.load_guilds()
+            print("Succesfully loaded guilds")
         except Exception as e:
             print(f"Error occurred while syncing commands: {e}")
 
@@ -37,3 +39,12 @@ class Eliza(commands.Bot):
             return
         else:
             raise error
+
+    async def close(self):
+        # DB 저장
+        self.guild_manager.save_guilds()
+        for i, guildctx in self.guild_manager.guilds.items():
+            guildctx.save_agent_history()
+
+        # Discord 연결 종료
+        await super().close()

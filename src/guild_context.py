@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>
 from src.tools import DiscordTools
 from google import genai
 from google.genai import types
-import src.hangul512 as hangul512, re
+import src.hangul512 as hangul512, re, sqlite3, json
 from contextvars import ContextVar
 
 class GuildContext:
@@ -36,6 +36,7 @@ class GuildContext:
         self.gemini = genai.Client(api_key=self.api_key)
         self.chat = None
         self.request_context: ContextVar[dict] = ContextVar("request_context")
+        self.load_agent_history()
 
     def update_context(self, agentchannel=None, permission=None, need_prefix=None, guild_term=None, user_instruction=None, api_key=None):
         if agentchannel is not None:
@@ -53,9 +54,27 @@ class GuildContext:
             self.gemini = genai.Client(api_key=self.api_key)
 
     def load_agent_history(self):
-        # Load the agent history from the database or any other source
-        # This is a placeholder implementation, replace it with your actual logic
-        self.agent_history = []  # Replace with actual loading logic
+        db = sqlite3.connect("db/memory.db")
+        cursor = db.cursor()
+
+        insert_sql = "SELECT * FROM memory WHERE guild_id = ?"
+
+        cursor.execute(insert_sql,(self.guild.id, ))
+        content = cursor.fetchone()
+        if not content:
+            return
+        self.agent_history = json.loads(content[1])
+
+    def save_agent_history(self):
+        db = sqlite3.connect("db/memory.db")
+        cursor = db.cursor()
+        
+        insert_sql = "INSERT INTO memory (guild_id, content) VALUES (?, ?) ON CONFLICT(guild_id) DO UPDATE SET content = excluded.content"
+
+        cursor.execute(insert_sql,(self.guild.id, json.dumps(self.chat.get_history(True))))
+        
+        db.commit()
+            
 
     def instruction_builder(self):
         instruction = f'''

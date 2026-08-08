@@ -16,15 +16,44 @@ along with this program. If not, see <http://www.gnu.org/licenses/>
 '''
 
 from src.guild_context import GuildContext
+import sqlite3
 
 class GuildManager:
     def __init__(self, bot):
         self.bot = bot
         self.guilds = {}
 
+        self._init_db()
+
+    def _init_db(self):
+        db = db = sqlite3.connect("db/guilds.db")
+        cursor = db.cursor()
+        
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS guilds (
+                guild_id INTEGER PRIMARY KEY,
+                agentchannel INTEGER NOT NULL,
+                need_prefix BOOLEAN NOT NULL DEFAULT 1,
+                api_key TEXT DEFAULT NULL
+            );
+        ''')
+        
+        db.commit()
+
+        db = sqlite3.connect("db/memory.db")
+        cursor = db.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS memory (
+                guild_id INTEGER PRIMARY KEY,
+                content TEXT
+            );
+        ''')
+
+        db.commit()
+
+
     def add_guild(self, guild_id, agentchannel=None, need_prefix=True, api_key=None):
-        if guild_id not in self.guilds:
-            self.guilds[guild_id] = GuildContext(self.bot, self.bot.get_guild(guild_id), agentchannel=agentchannel, need_prefix=need_prefix, api_key=api_key)
+        self.guilds[guild_id] = GuildContext(self.bot, self.bot.get_guild(guild_id), agentchannel=agentchannel, need_prefix=need_prefix, api_key=api_key)
             # You can add more initialization logic here if needed
 
     def remove_guild(self, guild_id):
@@ -38,4 +67,37 @@ class GuildManager:
         return None
 
     def load_guilds(self):
-        pass #나중에 DB 연결
+        db = sqlite3.connect("db/guilds.db")
+        cursor = db.cursor()
+
+        cursor.execute("SELECT * FROM guilds")
+        guild_rows = cursor.fetchall()
+
+        for guild_row in guild_rows:
+            print(guild_row[1])
+            self.add_guild(guild_row[0], guild_row[1], guild_row[2], guild_row[3])
+
+
+    def save_guilds(self):
+        db = sqlite3.connect("db/guilds.db")
+        cursor = db.cursor()
+
+        insert_sql = """
+            INSERT INTO guilds (
+                guild_id,
+                agentchannel,
+                need_prefix,
+                api_key
+            )
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(guild_id) DO UPDATE SET
+                agentchannel = excluded.agentchannel,
+                need_prefix = excluded.need_prefix,
+                api_key = excluded.api_key
+        """
+        for guild_id, guildctx in self.guilds.items():
+            cursor.execute(insert_sql,(guild_id, guildctx.agentchannel, guildctx.need_prefix, guildctx.api_key))
+
+        db.commit()
+
+        

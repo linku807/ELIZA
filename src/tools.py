@@ -40,12 +40,18 @@ class DiscordTools():
         embed.add_field(name="상태", value=status, inline=False)
         if detail:
             embed.add_field(name="상세", value=detail, inline=False)
-        await self.guildctx.agentchannel.send(embed = embed)
+        channel = self.bot.get_channel(self.guildctx.agentchannel)
+        if not channel:
+            try:
+                channel = await self.bot.fetch_channel(self.guildctx.agentchannel)
+            except Exception as e:
+                raise e
+        await channel.send(embed = embed)
+       
 
 
     async def _get_channel(self, channelId:str, function_name:str):
         channelId_sf = hangul512.decode(channelId)
-        print(f"trying to get channel : {channelId_sf}, {type(channelId_sf)}")
         channel = self.bot.get_channel(int(channelId_sf))
         if not channel:
             try:

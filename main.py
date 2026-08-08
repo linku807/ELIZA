@@ -40,7 +40,7 @@ bot = Eliza(command_prefix="", intents=intents)
 @app_commands.checks.has_permissions(administrator=True)
 @app_commands.guild_only()
 async def initial_setup(interaction: discord.Interaction, 채널: discord.TextChannel, 프리픽스: bool = True, apikey: str = aikey):
-	bot.guild_manager.add_guild(interaction.guild.id, agentchannel=채널, need_prefix=프리픽스, api_key=apikey)
+	bot.guild_manager.add_guild(interaction.guild.id, agentchannel=채널.id, need_prefix=프리픽스, api_key=apikey)
 	await interaction.response.send_message("에이전트 초기설정이 완료되었습니다.", ephemeral=True)
 
 @bot.command(name="<@1534080925875441664>")
@@ -49,7 +49,7 @@ async def agent_metioned(ctx):
 	if guild_context:
 		if not guild_context.chat:
 			guild_context.init_chat()
-		guild_context.request_context.set({"user": ctx.author})
+		guild_context.request_context.set({"user": ctx.author}) # 권한 필요한 도구 사용할때 참고하기 위함!
 		message = ctx.message.content.replace("<@1534080925875441664> ", "").strip()
 
 		origin_msg = await ctx.send("-# **ELIZA가 생각 중이에요**")
