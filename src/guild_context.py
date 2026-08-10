@@ -31,7 +31,7 @@ class GuildContext:
         self.need_prefix = need_prefix
         self.guild_term = guild_term
         self.user_instruction = user_instruction
-        self.agent_history = []  # Initialize agent history as an empty list
+        self.agent_history = [] 
         self.api_key = api_key
         self.gemini = genai.Client(api_key=self.api_key)
         self.chat = None
@@ -63,15 +63,24 @@ class GuildContext:
         content = cursor.fetchone()
         if not content:
             return
-        self.agent_history = json.loads(content[1])
+        history_data = json.loads(content[1])
+        self.agent_history = [
+            types.Content.model_validate(item)
+            for item in history_data
+        ]
 
     def save_agent_history(self):
+        if not self.chat:
+            return
         db = sqlite3.connect("db/memory.db")
         cursor = db.cursor()
         
         insert_sql = "INSERT INTO memory (guild_id, content) VALUES (?, ?) ON CONFLICT(guild_id) DO UPDATE SET content = excluded.content"
 
-        cursor.execute(insert_sql,(self.guild.id, json.dumps(self.chat.get_history(True))))
+        history = self.chat.get_history(True)
+        db_content = json.dumps([item.to_json_dict() for item in history],ensure_ascii=False)
+
+        cursor.execute(insert_sql,(self.guild.id, db_content))
         
         db.commit()
             
